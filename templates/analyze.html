@@ -1,8 +1,94 @@
 <html>
+    <head>
+        <!-- Load Bokeh JS from CDN -->
+        <script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.4.3.min.js" crossorigin="anonymous"></script>
+        <style>
+            .loading {
+                display: inline-block;
+                padding: 10px 20px;
+                background-color: #f0f0f0;
+                border-radius: 4px;
+                margin: 10px 0;
+            }
+            .error {
+                color: #d32f2f;
+                padding: 10px;
+                background-color: #ffebee;
+                border-left: 4px solid #d32f2f;
+                margin: 10px 0;
+            }
+        </style>
+    </head>
     <body>
-        You entered:
-        <pre style="background-color: lightgray; margin-left: 5em">{{ usertext }}</pre>
-        My analysis:
-        <pre style="background-color: lightgray; margin-left: 5em">{{ analysis }}</pre>
+        <h1>Analysis Results</h1>
+
+        <h3>PDB Information</h3>
+        <div style="background-color: #e8f4f8; padding: 1em; margin: 1em 0; border-left: 4px solid #2196F3;">
+            <strong>Target selected:</strong> {{ target }}<br>
+            <strong>PDB ID:</strong> {{ pdb_id }}<br>
+            <strong>Title:</strong> {{ pdb_title }}
+        </div>
+
+        {% if target == "TPP" %}
+        <img src="{{ url_for('static', filename='pdb_2gdi.png') }}" alt="PDB 2GDI Structure" style="max-width: 400px; margin: 20px 0;">
+        {% endif %}
+        
+        <div style="background-color: lightgray; padding: 1em; margin: 1em 0;">
+            {{ analysis|safe }}
+        </div>
+        
+        
+        <h3>Example Active Hits (up to 10)</h3>
+        <div style="background-color: #f0f0f0; padding: 1em; margin: 1em 0; font-family: monospace;">
+            {{ examples|safe }}
+        </div>
+        
+        <h3>Chemical Space Visualization (UMAP)</h3>
+        <p style="color: #666; font-size: 14px; margin: 10px 0;">
+            <strong>✨ Interactive Features:</strong> Hover over any point to see the molecule structure. Use mouse to pan and zoom.
+        </p>
+        <div id="loading" class="loading">Loading UMAP visualization with molecule structures... This may take a few moments.</div>
+        <div id="error-message" class="error" style="display: none;"></div>
+        <div id="umap-plot" style="width: 100%; max-width: 100%; margin: 20px 0;"></div>
+        
+        <script>
+            // Fetch UMAP plot components (Bokeh)
+            fetch('/umap_plot', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'target={{ target }}'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Failed to generate UMAP');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Hide loading message
+                document.getElementById('loading').style.display = 'none';
+                
+                // Inject the Bokeh div
+                const plotContainer = document.getElementById('umap-plot');
+                plotContainer.innerHTML = data.div;
+                
+                // Execute the Bokeh script
+                const scriptElement = document.createElement('script');
+                scriptElement.innerHTML = data.script;
+                document.body.appendChild(scriptElement);
+            })
+            .catch(error => {
+                // Hide loading message and show error
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error-message').style.display = 'block';
+                document.getElementById('error-message').textContent = 'Error: ' + error.message;
+                console.error('UMAP Error:', error);
+            });
+        </script>
+        
+        <br>
+        <a href="/">Analyze another target</a>
     </body>
 </html>
