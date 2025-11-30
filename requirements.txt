@@ -7,4 +7,6 @@ umap-learn
 plotly
 scikit-learn
 scipy
+python-dotenv
+openai
 

@@ -15,6 +15,9 @@ ENV/
 instance/
 .webassets-cache
 
+# Environment variables
+.env
+
 # IDE
 .vscode/
 .idea/
@@ -27,3 +30,5 @@ instance/
 Thumbs.db
 
 *.csv
+
+arxiv/

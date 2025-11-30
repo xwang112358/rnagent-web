@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 import pandas as pd
 import requests
 import json
@@ -12,8 +12,19 @@ import numpy as np
 import umap
 import plotly.graph_objects as go
 from sklearn.cluster import KMeans
+from dotenv import load_dotenv
+import chatbox
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
+app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+
+# Azure OpenAI configuration
+AZURE_OPENAI_KEY = os.getenv('AZURE_OPENAI_KEY')
+AZURE_OPENAI_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
+AZURE_OPENAI_DEPLOYMENT = os.getenv('AZURE_OPENAI_DEPLOYMENT', 'gpt-4')
 
 # Load the dataset once when the server starts
 df = pd.read_csv("robin_clean.csv")
@@ -257,6 +268,9 @@ def analyze():
     # Check if target is valid
     valid_targets = ["TPP", "Glutamine_RS", "ZTP", "SAM_ll", "PreQ1"]
     num_hits = 0
+    chat_intro = None
+    rcsb_data = None
+    
     if target not in valid_targets:
         result = f"Invalid target. Please choose from: {', '.join(valid_targets)}"
     else:
@@ -265,7 +279,7 @@ def analyze():
         pdb_id = pdb_ids[target]
         result = ""
         
-        # Fetch PDB title from RCSB API
+        # Fetch PDB title from RCSB API (keeping original for backwards compatibility)
         pdb_title = "Title not available"
         try:
             api_url = f"https://data.rcsb.org/rest/v1/core/entry/{pdb_id}"
@@ -276,12 +290,38 @@ def analyze():
         except Exception as e:
             pdb_title = f"Error fetching title: {str(e)}"
         
+        # Fetch comprehensive RCSB data for chatbox
+        try:
+            rcsb_data = chatbox.fetch_rcsb_data(pdb_id)
+            # Store in session for later use in chat
+            session['rcsb_data'] = rcsb_data
+            session['pdb_id'] = pdb_id
+            
+            # Generate introduction message using Azure OpenAI
+            if AZURE_OPENAI_KEY and AZURE_OPENAI_ENDPOINT:
+                try:
+                    chat_intro = chatbox.generate_introduction(
+                        rcsb_data, 
+                        AZURE_OPENAI_KEY, 
+                        AZURE_OPENAI_ENDPOINT,
+                        AZURE_OPENAI_DEPLOYMENT
+                    )
+                except Exception as e:
+                    print(f"Error generating introduction: {e}")
+                    chat_intro = chatbox.generate_fallback_introduction(rcsb_data)
+            else:
+                chat_intro = chatbox.generate_fallback_introduction(rcsb_data)
+        except Exception as e:
+            print(f"Error fetching RCSB data: {e}")
+            chat_intro = f"Welcome! I'm here to answer questions about {pdb_id}. Unfortunately, I couldn't fetch detailed information at this time."
+        
         # Get all active molecules
         active_molecules = df[df[target] == 1]["Smile"].tolist()
         examples = "<br>".join(active_molecules) if active_molecules else "No active molecules found"
     
     return render_template("analyze.html", analysis=result, target=target, examples=examples, 
-                         pdb_id=pdb_id, pdb_title=pdb_title, num_hits=num_hits)
+                         pdb_id=pdb_id, pdb_title=pdb_title, num_hits=num_hits,
+                         chat_intro=chat_intro, rcsb_data=rcsb_data)
 
 
 @app.route("/regenerate_umap/<target>")
@@ -537,6 +577,67 @@ def density_plots():
         import traceback
         traceback.print_exc()
         return jsonify({"error": f"Error loading density plots: {str(e)}"}), 500
+
+
+@app.route("/chat", methods=["POST"])
+def chat():
+    """Handle chat messages and return AI responses."""
+    try:
+        data = request.get_json()
+        user_message = data.get('message', '').strip()
+        conversation_history = data.get('history', [])
+        
+        if not user_message:
+            return jsonify({"error": "Message is required"}), 400
+        
+        # Check if Azure OpenAI is configured
+        if not AZURE_OPENAI_KEY or not AZURE_OPENAI_ENDPOINT:
+            return jsonify({
+                "error": "Azure OpenAI is not configured. Please set AZURE_OPENAI_KEY and AZURE_OPENAI_ENDPOINT in your .env file."
+            }), 503
+        
+        # Get RCSB data from session
+        rcsb_data = session.get('rcsb_data')
+        if not rcsb_data:
+            # Try to fetch it if not in session
+            pdb_id = session.get('pdb_id')
+            if pdb_id:
+                rcsb_data = chatbox.fetch_rcsb_data(pdb_id)
+                session['rcsb_data'] = rcsb_data
+            else:
+                return jsonify({"error": "No structure context available"}), 400
+        
+        # Build messages array for OpenAI
+        system_prompt = chatbox.create_system_prompt(rcsb_data)
+        messages = [{"role": "system", "content": system_prompt}]
+        
+        # Add conversation history
+        for msg in conversation_history:
+            messages.append({
+                "role": msg.get('role', 'user'),
+                "content": msg.get('content', '')
+            })
+        
+        # Add current user message
+        messages.append({"role": "user", "content": user_message})
+        
+        # Call Azure OpenAI
+        response = chatbox.call_azure_openai(
+            messages,
+            AZURE_OPENAI_KEY,
+            AZURE_OPENAI_ENDPOINT,
+            AZURE_OPENAI_DEPLOYMENT
+        )
+        
+        if response:
+            return jsonify({"response": response})
+        else:
+            return jsonify({"error": "Failed to get response from AI"}), 500
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Error processing chat: {str(e)}"}), 500
 
 
 if __name__ == "__main__":
