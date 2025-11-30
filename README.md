@@ -1,0 +1,17 @@
+For the presentation and report, be sure to:
+- Describe the dataset and why it is interesting.
+- Explain how you acquired it (e.g. via an API, file download, etc).
+    - Discuss the FAIRness of the data provider.
+        - FAIR is a journey not a destination, so when considering each aspect find something that it does well and something that could be done better
+        - Include: Was the data well-annotated with metadata? Was the license clear?
+- Describe any data cleaning or other preprocessing.
+    - e.g. If some data was missing, how did you handle it?
+- Discuss summary statistics and how they do or do not reflect the characteristics of the data. (e.g. are they skewed by outliers, is missing data a problem? are they misleading because of non-continuous variables? etc?)
+    - There are datasets where summary statistics are inappropriate (e.g., sound recordings, images, text)... if you think this applies to your data, consult with the professor on what to do instead
+- Discuss the analyses you chose to run.
+    - Why these questions?
+    - What were the results?
+    - Any surprises?
+    - How did you validate your analyses?
+- Describe your server API and the web front-end.
+- Mention any surprising results or unexpected difficulties.
