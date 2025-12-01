@@ -29,6 +29,9 @@ AZURE_OPENAI_DEPLOYMENT = os.getenv('AZURE_OPENAI_DEPLOYMENT', 'gpt-4')
 # Load the dataset once when the server starts
 df = pd.read_csv("robin_clean.csv")
 
+# Load the sequence data
+sequence_df = pd.read_csv("robin_sequence.csv")
+
 # Cache directory for UMAP embeddings
 CACHE_DIR = Path("umap_cache")
 CACHE_DIR.mkdir(exist_ok=True)
@@ -270,6 +273,9 @@ def analyze():
     num_hits = 0
     chat_intro = None
     rcsb_data = None
+    sequence = "Sequence not available"
+    pdb_id = None
+    pdb_title = "Title not available"
     
     if target not in valid_targets:
         result = f"Invalid target. Please choose from: {', '.join(valid_targets)}"
@@ -289,6 +295,15 @@ def analyze():
                 pdb_title = data.get("struct", {}).get("title", "Title not available")
         except Exception as e:
             pdb_title = f"Error fetching title: {str(e)}"
+        
+        # Get sequence from robin_sequence.csv
+        try:
+            target_row = sequence_df[sequence_df["Nucleic_Acid_Target"] == target]
+            if not target_row.empty:
+                sequence = target_row.iloc[0]["Sequence"]
+        except Exception as e:
+            print(f"Error fetching sequence for {target}: {e}")
+            sequence = "Sequence not available"
         
         # Fetch comprehensive RCSB data for chatbox
         try:
@@ -321,7 +336,7 @@ def analyze():
     
     return render_template("analyze.html", analysis=result, target=target, examples=examples, 
                          pdb_id=pdb_id, pdb_title=pdb_title, num_hits=num_hits,
-                         chat_intro=chat_intro, rcsb_data=rcsb_data)
+                         chat_intro=chat_intro, rcsb_data=rcsb_data, sequence=sequence)
 
 
 @app.route("/regenerate_umap/<target>")

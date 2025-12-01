@@ -1,11 +1,46 @@
 <html>
+    <head>
+        <style>
+            .instruction-text {
+                font-size: 20px;
+                font-weight: bold;
+                margin: 20px 0;
+            }
+            .target-label {
+                font-size: 18px;
+                font-weight: bold;
+            }
+            .target-select {
+                font-size: 16px;
+                padding: 10px 15px;
+                margin-left: 10px;
+            }
+            .action-button {
+                display: inline-block;
+                padding: 15px 30px;
+                font-size: 18px;
+                font-weight: bold;
+                color: white;
+                background-color: #2196F3;
+                text-decoration: none;
+                border: none;
+                border-radius: 5px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                transition: background-color 0.3s;
+                cursor: pointer;
+            }
+            .action-button:hover {
+                background-color: #1976D2;
+            }
+        </style>
+    </head>
     <body>
         <h2>RNA Target Screening Analysis</h2>
         <img src="{{ url_for('static', filename='rna-ligand-inputs.png') }}" alt="RNA-Ligand Inputs" style="max-width: 600px; margin: 20px 0;">
-        <p>Select an RNA target to analyze the virtual screening results:</p>
+        <p class="instruction-text">Select an RNA target to analyze the virtual screening results:</p>
         <form action="/analyze" method="POST">
-            <label for="target">RNA Target:</label>
-            <select name="target" id="target">
+            <label for="target" class="target-label">RNA Target:</label>
+            <select name="target" id="target" class="target-select">
                 <option value="TPP">TPP</option>
                 <option value="Glutamine_RS">Glutamine_RS</option>
                 <option value="ZTP">ZTP</option>
@@ -13,7 +48,7 @@
                 <option value="PreQ1">PreQ1</option>
             </select>
             <br><br>
-            <input type="submit" value="Analyze">
+            <input type="submit" value="Analyze" class="action-button">
         </form>
     </body>
 </html>
