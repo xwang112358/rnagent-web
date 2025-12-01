@@ -576,7 +576,25 @@
                 if (filtered.length === 0) {
                     activeMoleculesList.innerHTML = '<div style="color: #666; font-style: italic;">No molecules match the selected filters.</div>';
                 } else {
-                    activeMoleculesList.innerHTML = filtered.map(mol => mol.smiles).join('<br>');
+                    // Create table header
+                    let html = '<table style="width: 100%; border-collapse: collapse;">';
+                    html += '<thead><tr style="border-bottom: 2px solid #ccc; font-weight: bold; background-color: #e0e0e0;">';
+                    html += '<th style="text-align: left; padding: 8px;">SMILES</th>';
+                    html += '<th style="text-align: left; padding: 8px;">QED</th>';
+                    html += '<th style="text-align: left; padding: 8px;">SA Score</th>';
+                    html += '</tr></thead><tbody>';
+                    
+                    // Add rows for each molecule
+                    filtered.forEach(mol => {
+                        html += '<tr style="border-bottom: 1px solid #e0e0e0;">';
+                        html += `<td style="padding: 6px 8px; word-break: break-all;">${mol.smiles}</td>`;
+                        html += `<td style="padding: 6px 8px;">${mol.qed.toFixed(3)}</td>`;
+                        html += `<td style="padding: 6px 8px;">${mol.sa.toFixed(2)}</td>`;
+                        html += '</tr>';
+                    });
+                    
+                    html += '</tbody></table>';
+                    activeMoleculesList.innerHTML = html;
                 }
             }
             
