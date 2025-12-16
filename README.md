@@ -53,3 +53,16 @@ The app will be available at `http://127.0.0.1:5000`
 - **Molecular Properties**: QED and SA score distributions with filtering
 - **AI Chatbot**: Context-aware Q&A about RNA structures using RCSB PDB data
 
+## Web Screen Shots 
+
+### Landing page (target selection)
+
+![Landing page (target selection)](static/repo-index.png)
+
+### Analysis dashboard
+
+![Analysis dashboard - view 1](static/repo-analysis1.png)
+
+![Analysis dashboard - view 2](static/repo-analysis2.png)
+
+![Analysis dashboard - view 3](static/repo-analysis3.png)
