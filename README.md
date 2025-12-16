@@ -43,9 +43,6 @@ The app will be available at `http://127.0.0.1:5000`
 ├── robin_sequence.csv     # RNA target sequences
 ├── umap_cache/            # Pre-computed UMAP embeddings (auto-generated)
 ├── RCSB_data/             # Cached PDB structure data (auto-generated)
-├── md_files/
-│   ├── RNA_ASSISTANT_CHATBOX.md  # Chatbot documentation
-│   └── UMAP_IMPLEMENTATION.md    # UMAP visualization docs
 └── environment.yml        # Conda environment specification
 ```
 
