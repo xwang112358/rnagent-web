@@ -1,0 +1,29 @@
+{
+  "authors": [
+    "Jones, C.P.",
+    "Ferre-D'Amare, A.R."
+  ],
+  "citation": "Recognition of the bacterial alarmone ZMP through long-distance association of two RNA subdomains. Nat.Struct.Mol.Biol. (2015)",
+  "description": "",
+  "doi": "10.1038/nsmb.3073",
+  "experimental_method": "X-RAY DIFFRACTION",
+  "ligands": [
+    "AMZ",
+    "MG"
+  ],
+  "mesh_terms": [
+    "Adenosine Monophosphate",
+    "Crystallography, X-Ray",
+    "Fusobacterium",
+    "Isopentenyladenosine",
+    "Models, Molecular",
+    "RNA",
+    "Riboswitch"
+  ],
+  "pdb_id": "5BTP",
+  "pubmed_abstract": "The bacterial alarmone 5-aminoimidazole-4-carboxamide riboside 5'-triphosphate (AICAR triphosphate or ZTP), derived from the monophosphorylated purine precursor ZMP, accumulates during folate starvation. ZTP regulates genes involved in purine and folate metabolism through a cognate riboswitch. The linker connecting this riboswitch's two subdomains varies in length by over 100 nucleotides. We report the cocrystal structure of the Fusobacterium ulcerans riboswitch bound to ZMP, which spans the two subdomains whose interface also comprises a pseudoknot and ribose zipper. The riboswitch recognizes the carboxamide oxygen of ZMP through an unprecedented inner-sphere coordination with a Mg(2+) ion. We show that the affinity of the riboswitch for ZMP is modulated by the linker length. Notably, ZMP can simultaneously bind to the two subdomains even when they are synthesized as separate RNAs. The ZTP riboswitch demonstrates how specific small-molecule binding can drive association of distant noncoding-RNA domains to regulate gene expression.",
+  "pubmed_id": 26280533,
+  "resolution": "2.816 Å",
+  "target": "ZTP",
+  "title": "Fusobacterium ulcerans ZTP riboswitch bound to ZMP"
+}

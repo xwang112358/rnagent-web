@@ -1,0 +1,40 @@
+{
+  "authors": [
+    "Serganov, A.",
+    "Polonskaia, A.",
+    "Phan, A.T.",
+    "Breaker, R.R.",
+    "Patel, D.J."
+  ],
+  "citation": "Structural basis for gene regulation by a thiamine pyrophosphate-sensing riboswitch. Nature (2006)",
+  "description": "",
+  "doi": "10.1038/nature04740",
+  "experimental_method": "X-RAY DIFFRACTION",
+  "ligands": [
+    "K",
+    "MG",
+    "NA",
+    "TPP"
+  ],
+  "mesh_terms": [
+    "Base Sequence",
+    "Binding Sites",
+    "Crystallization",
+    "Crystallography, X-Ray",
+    "Escherichia coli",
+    "Gene Expression Regulation, Bacterial",
+    "Ligands",
+    "Models, Molecular",
+    "Molecular Sequence Data",
+    "Nucleic Acid Conformation",
+    "RNA, Bacterial",
+    "RNA, Messenger",
+    "Thiamine Pyrophosphate"
+  ],
+  "pdb_id": "2GDI",
+  "pubmed_abstract": "Riboswitches are metabolite-sensing RNAs, typically located in the non-coding portions of messenger RNAs, that control the synthesis of metabolite-related proteins. Here we describe a 2.05 angstroms crystal structure of a riboswitch domain from the Escherichia coli thiM mRNA that responds to the coenzyme thiamine pyrophosphate (TPP). TPP is an active form of vitamin B1, an essential participant in many protein-catalysed reactions. Organisms from all three domains of life, including bacteria, plants and fungi, use TPP-sensing riboswitches to control genes responsible for importing or synthesizing thiamine and its phosphorylated derivatives, making this riboswitch class the most widely distributed member of the metabolite-sensing RNA regulatory system. The structure reveals a complex folded RNA in which one subdomain forms an intercalation pocket for the 4-amino-5-hydroxymethyl-2-methylpyrimidine moiety of TPP, whereas another subdomain forms a wider pocket that uses bivalent metal ions and water molecules to make bridging contacts to the pyrophosphate moiety of the ligand. The two pockets are positioned to function as a molecular measuring device that recognizes TPP in an extended conformation. The central thiazole moiety is not recognized by the RNA, which explains why the antimicrobial compound pyrithiamine pyrophosphate targets this riboswitch and downregulates the expression of thiamine metabolic genes. Both the natural ligand and its drug-like analogue stabilize secondary and tertiary structure elements that are harnessed by the riboswitch to modulate the synthesis of the proteins coded by the mRNA. In addition, this structure provides insight into how folded RNAs can form precision binding pockets that rival those formed by protein genetic factors.",
+  "pubmed_id": 16728979,
+  "resolution": "2.05 Å",
+  "target": "TPP",
+  "title": "Crystal structure of thiamine pyrophosphate-specific riboswitch in complex with thiamine pyrophosphate"
+}

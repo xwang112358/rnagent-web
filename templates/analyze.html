@@ -5,6 +5,36 @@
         <!-- Load 3Dmol.js from CDN -->
         <script src="https://3Dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
         <style>
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            }
+            .header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 50px 20px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                margin-bottom: 30px;
+            }
+            .header h1 {
+                margin: 0;
+                font-size: 42px;
+                font-weight: 700;
+                letter-spacing: 1px;
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+                text-align: center;
+            }
+            .header p {
+                margin: 12px 0 0 0;
+                font-size: 16px;
+                opacity: 0.95;
+                font-weight: 300;
+                text-align: center;
+            }
+            .content {
+                padding: 0 20px 20px 20px;
+            }
             .loading {
                 display: inline-block;
                 padding: 10px 20px;
@@ -291,8 +321,12 @@
         </style>
     </head>
     <body>
-        <h1>Analysis Results</h1>
-
+        <div class="header">
+            <h1>Analysis Results</h1>
+            <p>Interactive visualization and analysis of active hits</p>
+        </div>
+        
+        <div class="content">
         <h2>Understanding the RNA Target</h2>
         
         <div style="background-color: #e8f4f8; padding: 1em; margin: 1em 0; border-left: 4px solid #2196F3; max-width: 1440px; margin-left: auto; margin-right: auto;">
@@ -307,7 +341,7 @@
             
             <div id="chatbox-container">
                 <div id="chatbox-header">
-                    💬 RNA Structure Assistant
+                    💬 RNA Assistant
                 </div>
                 <div id="chat-messages">
                     {% if chat_intro %}
@@ -385,6 +419,15 @@
                         style="padding: 8px 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px; width: 100px; transition: border-color 0.3s;"
                     />
                 </div>
+            </div>
+            <div style="margin-top: 15px; display: flex; gap: 10px; align-items: center;">
+                <button id="apply-umap-filter" onclick="filterUMAPPlot()" style="padding: 10px 20px; background-color: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold; transition: background-color 0.3s;">
+                    Apply Filter to UMAP
+                </button>
+                <button id="reset-umap-filter" onclick="resetUMAPFilter()" style="padding: 10px 20px; background-color: #757575; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold; transition: background-color 0.3s;">
+                    Reset UMAP Filter
+                </button>
+                <div id="umap-filter-status" style="font-size: 13px; color: #666;"></div>
             </div>
         </div>
         
@@ -481,6 +524,11 @@
             let moleculeData = null;
             let originalPlotData = null;
             let currentClusterLabels = null;
+            let originalMoleculeData = null;  // Store complete original dataset
+            let originalAxisRanges = null;    // Store original axis ranges
+            let currentClusterColors = null;  // Store current cluster color mapping
+            let filteredIndices = null;       // Track which indices are currently shown
+            let isFiltered = false;           // Track if filtering is active
             const detailPanel = document.getElementById('molecule-detail');
             const placeholder = document.getElementById('info-placeholder');
             
@@ -605,6 +653,193 @@
             saMinInput.addEventListener('input', filterMolecules);
             saMaxInput.addEventListener('input', filterMolecules);
             
+            // Filter UMAP plot based on QED and SA scores
+            function filterUMAPPlot() {
+                if (!originalMoleculeData) {
+                    console.error('Original molecule data not loaded yet');
+                    return;
+                }
+                
+                const statusDiv = document.getElementById('umap-filter-status');
+                const filterButton = document.getElementById('apply-umap-filter');
+                
+                // Disable button during processing
+                filterButton.disabled = true;
+                statusDiv.textContent = 'Applying filter...';
+                statusDiv.style.color = '#2196F3';
+                
+                // Get filter values
+                const qedMin = parseFloat(qedMinInput.value) || 0;
+                const qedMax = parseFloat(qedMaxInput.value) || 1;
+                const saMin = parseFloat(saMinInput.value) || 1;
+                const saMax = parseFloat(saMaxInput.value) || 10;
+                
+                // Validate ranges
+                if (qedMin > qedMax) {
+                    statusDiv.textContent = 'Error: QED Min cannot be greater than QED Max';
+                    statusDiv.style.color = '#d32f2f';
+                    filterButton.disabled = false;
+                    return;
+                }
+                
+                if (saMin > saMax) {
+                    statusDiv.textContent = 'Error: SA Min cannot be greater than SA Max';
+                    statusDiv.style.color = '#d32f2f';
+                    filterButton.disabled = false;
+                    return;
+                }
+                
+                // Filter molecules based on QED and SA scores
+                filteredIndices = [];
+                const filteredData = {
+                    x: [],
+                    y: [],
+                    names: [],
+                    smiles: [],
+                    images: [],
+                    qed: [],
+                    sa: []
+                };
+                
+                for (let i = 0; i < originalMoleculeData.x.length; i++) {
+                    const qed = originalMoleculeData.qed[i];
+                    const sa = originalMoleculeData.sa[i];
+                    
+                    // Check if molecule passes the filter
+                    if (qed !== null && sa !== null && 
+                        qed >= qedMin && qed <= qedMax && 
+                        sa >= saMin && sa <= saMax) {
+                        filteredIndices.push(i);
+                        filteredData.x.push(originalMoleculeData.x[i]);
+                        filteredData.y.push(originalMoleculeData.y[i]);
+                        filteredData.names.push(originalMoleculeData.names[i]);
+                        filteredData.smiles.push(originalMoleculeData.smiles[i]);
+                        filteredData.images.push(originalMoleculeData.images[i]);
+                        filteredData.qed.push(originalMoleculeData.qed[i]);
+                        filteredData.sa.push(originalMoleculeData.sa[i]);
+                    }
+                }
+                
+                // Check if any molecules match
+                if (filteredIndices.length === 0) {
+                    statusDiv.textContent = 'No molecules match the selected filters';
+                    statusDiv.style.color = '#d32f2f';
+                    filterButton.disabled = false;
+                    return;
+                }
+                
+                // Update moleculeData with filtered data
+                moleculeData = filteredData;
+                isFiltered = true;
+                
+                // Determine colors based on clustering state
+                let markerColors;
+                if (currentClusterLabels && currentClusterColors) {
+                    // Apply cluster colors to filtered data
+                    markerColors = filteredIndices.map(i => currentClusterColors[i]);
+                } else {
+                    // Use default blue color
+                    markerColors = '#2196F3';
+                }
+                
+                // Update the plot
+                const plotDiv = document.getElementById('umap-plot');
+                Plotly.restyle(plotDiv, {
+                    'x': [filteredData.x],
+                    'y': [filteredData.y],
+                    'marker.color': [markerColors],
+                    'customdata': [filteredData.images.map((img, idx) => [img, filteredData.names[idx], filteredData.smiles[idx]])]
+                });
+                
+                // Update hover text
+                const hoverTexts = [];
+                for (let i = 0; i < filteredData.names.length; i++) {
+                    const hoverText = (
+                        `<b>${filteredData.names[i]}</b><br>` +
+                        `UMAP-1: ${filteredData.x[i].toFixed(2)}<br>` +
+                        `UMAP-2: ${filteredData.y[i].toFixed(2)}<br>` +
+                        `SMILES: ${filteredData.smiles[i]}<br>` +
+                        `<extra></extra>`
+                    );
+                    hoverTexts.push(hoverText);
+                }
+                Plotly.restyle(plotDiv, {'text': [hoverTexts]});
+                
+                // Maintain original axis ranges
+                Plotly.relayout(plotDiv, {
+                    'xaxis.range': originalAxisRanges.x,
+                    'yaxis.range': originalAxisRanges.y,
+                    'title.text': `UMAP Visualization - Showing ${filteredIndices.length} of ${originalMoleculeData.x.length} molecules`
+                });
+                
+                statusDiv.textContent = `✓ Showing ${filteredIndices.length} of ${originalMoleculeData.x.length} molecules`;
+                statusDiv.style.color = '#4CAF50';
+                filterButton.disabled = false;
+            }
+            
+            // Reset UMAP filter to show all molecules
+            function resetUMAPFilter() {
+                if (!originalMoleculeData) {
+                    console.error('Original molecule data not loaded yet');
+                    return;
+                }
+                
+                const statusDiv = document.getElementById('umap-filter-status');
+                
+                // Reset to original data
+                moleculeData = JSON.parse(JSON.stringify(originalMoleculeData));
+                filteredIndices = Array.from({length: originalMoleculeData.x.length}, (_, i) => i);
+                isFiltered = false;
+                
+                // Determine colors based on clustering state
+                let markerColors;
+                let titleText;
+                
+                if (currentClusterLabels && currentClusterColors) {
+                    // Use cluster colors
+                    markerColors = currentClusterColors;
+                    const nClusters = Math.max(...currentClusterLabels) + 1;
+                    titleText = `UMAP Visualization with ${nClusters} K-Means Clusters (${originalMoleculeData.x.length} molecules)`;
+                } else {
+                    // Use original default color
+                    markerColors = originalPlotData.marker.color;
+                    titleText = `UMAP Visualization of Active Molecules for {{ target }} (${originalMoleculeData.x.length} molecules)`;
+                }
+                
+                // Update the plot
+                const plotDiv = document.getElementById('umap-plot');
+                Plotly.restyle(plotDiv, {
+                    'x': [originalMoleculeData.x],
+                    'y': [originalMoleculeData.y],
+                    'marker.color': [markerColors],
+                    'customdata': [originalMoleculeData.images.map((img, idx) => [img, originalMoleculeData.names[idx], originalMoleculeData.smiles[idx]])]
+                });
+                
+                // Update hover text
+                const hoverTexts = [];
+                for (let i = 0; i < originalMoleculeData.names.length; i++) {
+                    const hoverText = (
+                        `<b>${originalMoleculeData.names[i]}</b><br>` +
+                        `UMAP-1: ${originalMoleculeData.x[i].toFixed(2)}<br>` +
+                        `UMAP-2: ${originalMoleculeData.y[i].toFixed(2)}<br>` +
+                        `SMILES: ${originalMoleculeData.smiles[i]}<br>` +
+                        `<extra></extra>`
+                    );
+                    hoverTexts.push(hoverText);
+                }
+                Plotly.restyle(plotDiv, {'text': [hoverTexts]});
+                
+                // Restore original axis ranges
+                Plotly.relayout(plotDiv, {
+                    'xaxis.range': originalAxisRanges.x,
+                    'yaxis.range': originalAxisRanges.y,
+                    'title.text': titleText
+                });
+                
+                statusDiv.textContent = 'Reset to show all molecules';
+                statusDiv.style.color = '#666';
+            }
+            
             // Initialize on page load
             initializeActiveMoleculesFilter();
             
@@ -656,26 +891,41 @@
                 // Save original plot data for reset functionality
                 originalPlotData = JSON.parse(JSON.stringify(data.plot_data.data[0]));
                 
+                // Save original complete dataset for filtering
+                originalMoleculeData = JSON.parse(JSON.stringify(moleculeData));
+                
+                // Save original axis ranges for maintaining fixed scale
+                originalAxisRanges = {
+                    x: [Math.min(...moleculeData.x), Math.max(...moleculeData.x)],
+                    y: [Math.min(...moleculeData.y), Math.max(...moleculeData.y)]
+                };
+                
+                // Initialize filteredIndices to all indices
+                filteredIndices = Array.from({length: moleculeData.x.length}, (_, i) => i);
+                
                 // Add event listener for hover to show molecule structure
                 plotDiv.on('plotly_hover', function(eventData) {
                     const pointIndex = eventData.points[0].pointIndex;
                     
-                    // Update details
-                    molName.textContent = moleculeData.names[pointIndex];
-                    molImg.src = moleculeData.images[pointIndex];
-                    molX.textContent = moleculeData.x[pointIndex].toFixed(2);
-                    molY.textContent = moleculeData.y[pointIndex].toFixed(2);
-                    molSmiles.textContent = moleculeData.smiles[pointIndex];
+                    // Map displayed index to original index if filtering is active
+                    const originalIndex = isFiltered ? filteredIndices[pointIndex] : pointIndex;
+                    
+                    // Update details using original molecule data
+                    molName.textContent = originalMoleculeData.names[originalIndex];
+                    molImg.src = originalMoleculeData.images[originalIndex];
+                    molX.textContent = originalMoleculeData.x[originalIndex].toFixed(2);
+                    molY.textContent = originalMoleculeData.y[originalIndex].toFixed(2);
+                    molSmiles.textContent = originalMoleculeData.smiles[originalIndex];
                     
                     // Update QED and SA scores
-                    if (moleculeData.qed[pointIndex] !== null) {
-                        molQed.textContent = moleculeData.qed[pointIndex].toFixed(3);
+                    if (originalMoleculeData.qed[originalIndex] !== null) {
+                        molQed.textContent = originalMoleculeData.qed[originalIndex].toFixed(3);
                     } else {
                         molQed.textContent = 'N/A';
                     }
                     
-                    if (moleculeData.sa[pointIndex] !== null) {
-                        molSa.textContent = moleculeData.sa[pointIndex].toFixed(2);
+                    if (originalMoleculeData.sa[originalIndex] !== null) {
+                        molSa.textContent = originalMoleculeData.sa[originalIndex].toFixed(2);
                     } else {
                         molSa.textContent = 'N/A';
                     }
@@ -1032,8 +1282,22 @@
                     // Create color palette for clusters
                     const colors = generateClusterColors(nClusters);
                     
-                    // Map cluster labels to colors
-                    const markerColors = currentClusterLabels.map(label => colors[label]);
+                    // Map cluster labels to colors for the full dataset
+                    currentClusterColors = currentClusterLabels.map(label => colors[label]);
+                    
+                    // Determine which colors to apply based on filtering state
+                    let markerColors;
+                    let titleText;
+                    
+                    if (isFiltered) {
+                        // Apply cluster colors only to filtered molecules
+                        markerColors = filteredIndices.map(i => currentClusterColors[i]);
+                        titleText = `UMAP Visualization with ${nClusters} K-Means Clusters - Showing ${filteredIndices.length} of ${originalMoleculeData.x.length} molecules`;
+                    } else {
+                        // Apply cluster colors to all molecules
+                        markerColors = currentClusterColors;
+                        titleText = `UMAP Visualization with ${nClusters} K-Means Clusters (${data.n_molecules} molecules)`;
+                    }
                     
                     // Update plot with cluster colors
                     const plotDiv = document.getElementById('umap-plot');
@@ -1044,7 +1308,7 @@
                     
                     // Update plot title
                     Plotly.relayout(plotDiv, {
-                        'title.text': `UMAP Visualization with ${nClusters} K-Means Clusters (${data.n_molecules} molecules)`
+                        'title.text': titleText
                     });
                     
                     // Update hover event to include cluster info
@@ -1080,21 +1344,32 @@
                     return;
                 }
                 
-                // Reset to original colors
+                // Clear cluster assignments
+                currentClusterLabels = null;
+                currentClusterColors = null;
+                
+                // Reset to original default color (blue)
+                const defaultColor = '#2196F3';
                 Plotly.restyle(plotDiv, {
-                    'marker.color': [originalPlotData.marker.color],
+                    'marker.color': [defaultColor],
                     'marker.line.color': ['white']
                 });
                 
-                // Reset title
+                // Reset title based on filtering state
+                let titleText;
+                if (isFiltered) {
+                    titleText = `UMAP Visualization - Showing ${filteredIndices.length} of ${originalMoleculeData.x.length} molecules`;
+                } else {
+                    titleText = `UMAP Visualization of Active Molecules for {{ target }} (${originalMoleculeData.x.length} molecules)`;
+                }
+                
                 Plotly.relayout(plotDiv, {
-                    'title.text': `UMAP Visualization of Active Molecules for {{ target }} (${moleculeData.names.length} molecules)`
+                    'title.text': titleText
                 });
                 
                 // Reset input border color
                 input.style.borderColor = '#ddd';
                 
-                currentClusterLabels = null;
                 statusDiv.textContent = 'Reset to original visualization';
                 statusDiv.style.color = '#666';
             }
@@ -1133,22 +1408,25 @@
                 plotDiv.on('plotly_hover', function(eventData) {
                     const pointIndex = eventData.points[0].pointIndex;
                     
-                    // Update details
-                    molName.textContent = moleculeData.names[pointIndex];
-                    molImg.src = moleculeData.images[pointIndex];
-                    molX.textContent = moleculeData.x[pointIndex].toFixed(2);
-                    molY.textContent = moleculeData.y[pointIndex].toFixed(2);
-                    molSmiles.textContent = moleculeData.smiles[pointIndex];
+                    // Map displayed index to original index if filtering is active
+                    const originalIndex = isFiltered ? filteredIndices[pointIndex] : pointIndex;
+                    
+                    // Update details using original molecule data
+                    molName.textContent = originalMoleculeData.names[originalIndex];
+                    molImg.src = originalMoleculeData.images[originalIndex];
+                    molX.textContent = originalMoleculeData.x[originalIndex].toFixed(2);
+                    molY.textContent = originalMoleculeData.y[originalIndex].toFixed(2);
+                    molSmiles.textContent = originalMoleculeData.smiles[originalIndex];
                     
                     // Update QED and SA scores
-                    if (moleculeData.qed[pointIndex] !== null) {
-                        molQed.textContent = moleculeData.qed[pointIndex].toFixed(3);
+                    if (originalMoleculeData.qed[originalIndex] !== null) {
+                        molQed.textContent = originalMoleculeData.qed[originalIndex].toFixed(3);
                     } else {
                         molQed.textContent = 'N/A';
                     }
                     
-                    if (moleculeData.sa[pointIndex] !== null) {
-                        molSa.textContent = moleculeData.sa[pointIndex].toFixed(2);
+                    if (originalMoleculeData.sa[originalIndex] !== null) {
+                        molSa.textContent = originalMoleculeData.sa[originalIndex].toFixed(2);
                     } else {
                         molSa.textContent = 'N/A';
                     }
@@ -1448,6 +1726,7 @@
         
         <div class="action-container">
             <a href="/" class="action-button">Analyze another target</a>
+        </div>
         </div>
     </body>
 </html>

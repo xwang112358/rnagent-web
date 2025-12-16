@@ -36,8 +36,46 @@ sequence_df = pd.read_csv("robin_sequence.csv")
 CACHE_DIR = Path("umap_cache")
 CACHE_DIR.mkdir(exist_ok=True)
 
+# Directory for storing fetched RCSB PDB data (one JSON per target)
+RCSB_DATA_DIR = Path("RCSB_data")
+RCSB_DATA_DIR.mkdir(exist_ok=True)
+
 # Cache file for molecular properties (QED and SA scores)
 PROPERTIES_CACHE_FILE = CACHE_DIR / "molecular_properties.json"
+
+def _safe_filename(stem: str) -> str:
+    """
+    Convert an arbitrary string into a safe filename stem (no path separators).
+    """
+    if stem is None:
+        return "unknown"
+    stem = str(stem).strip() or "unknown"
+    # Replace characters that can break paths on Windows/macOS/Linux
+    for ch in ['\\', '/', ':', '*', '?', '"', '<', '>', '|']:
+        stem = stem.replace(ch, "_")
+    return stem
+
+
+def save_rcsb_data_json(target: str, rcsb_data: dict, pdb_id=None) -> None:
+    """
+    Persist fetched RCSB data to ./RCSB_data/<target>.json (best-effort).
+    """
+    try:
+        file_stem = _safe_filename(target) if target else _safe_filename(pdb_id or "unknown")
+        out_path = RCSB_DATA_DIR / f"{file_stem}.json"
+
+        payload = dict(rcsb_data or {})
+        # Add a bit of provenance to make the file self-describing
+        if target and "target" not in payload:
+            payload["target"] = target
+        if pdb_id and "pdb_id" not in payload:
+            payload["pdb_id"] = pdb_id
+
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, indent=2, ensure_ascii=False, sort_keys=True)
+    except Exception as e:
+        # Do not break the app if the filesystem is read-only, etc.
+        print(f"Warning: failed to save RCSB data JSON: {e}")
 
 def smiles_to_image_base64(smiles, size=(200, 200)):
     """Convert SMILES to base64-encoded PNG image for hover display."""
@@ -311,6 +349,10 @@ def analyze():
             # Store in session for later use in chat
             session['rcsb_data'] = rcsb_data
             session['pdb_id'] = pdb_id
+            session['target'] = target
+
+            # Persist to disk for reproducibility/debugging
+            save_rcsb_data_json(target=target, rcsb_data=rcsb_data, pdb_id=pdb_id)
             
             # Generate introduction message using Azure OpenAI
             if AZURE_OPENAI_KEY and AZURE_OPENAI_ENDPOINT:
@@ -683,6 +725,12 @@ def chat():
             if pdb_id:
                 rcsb_data = chatbox.fetch_rcsb_data(pdb_id)
                 session['rcsb_data'] = rcsb_data
+                # Persist to disk (target may be missing if session was partially cleared)
+                save_rcsb_data_json(
+                    target=session.get('target'),
+                    rcsb_data=rcsb_data,
+                    pdb_id=pdb_id
+                )
             else:
                 return jsonify({"error": "No structure context available"}), 400
         

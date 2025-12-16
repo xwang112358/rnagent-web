@@ -1,0 +1,35 @@
+{
+  "authors": [
+    "Huang, L.",
+    "Wang, J.",
+    "Watkins, A.M.",
+    "Das, R.",
+    "Lilley, D.M.J."
+  ],
+  "citation": "Structure and ligand binding of the glutamine-II riboswitch. Nucleic Acids Res. (2019)",
+  "description": "",
+  "doi": "10.1093/nar/gkz539",
+  "experimental_method": "X-RAY DIFFRACTION",
+  "ligands": [
+    "GLN",
+    "MG"
+  ],
+  "mesh_terms": [
+    "Calorimetry",
+    "Crystallography, X-Ray",
+    "Glutamine",
+    "Hydrogen Bonding",
+    "Ligands",
+    "Molecular Dynamics Simulation",
+    "Nucleic Acid Conformation",
+    "Prochlorococcus",
+    "RNA, Bacterial",
+    "Riboswitch"
+  ],
+  "pdb_id": "6QN3",
+  "pubmed_abstract": "We have determined the structure of the glutamine-II riboswitch ligand binding domain using X-ray crystallography. The structure was solved using a novel combination of homology modeling and molecular replacement. The structure comprises three coaxial helical domains, the central one of which is a pseudoknot with partial triplex character. The major groove of this helix provides the binding site for L-glutamine, which is extensively hydrogen bonded to the RNA. Atomic mutation of the RNA at the ligand binding site leads to loss of binding shown by isothermal titration calorimetry, explaining the specificity of the riboswitch. A metal ion also plays an important role in ligand binding. This is directly bonded to a glutamine carboxylate oxygen atom, and its remaining inner-sphere water molecules make hydrogen bonding interactions with the RNA.",
+  "pubmed_id": 31216023,
+  "resolution": "2.3 Å",
+  "target": "Glutamine_RS",
+  "title": "Structure of the Glutamine II Riboswitch"
+}

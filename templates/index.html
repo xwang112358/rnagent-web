@@ -1,10 +1,55 @@
 <html>
     <head>
         <style>
+            body {
+                text-align: center;
+                padding: 0;
+                margin: 0;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            }
+            .header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 60px 20px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                margin-bottom: 40px;
+            }
+            .header h1 {
+                margin: 0;
+                font-size: 48px;
+                font-weight: 700;
+                letter-spacing: 1px;
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            }
+            .header p {
+                margin: 15px 0 0 0;
+                font-size: 18px;
+                opacity: 0.95;
+                font-weight: 300;
+            }
+            .content {
+                padding: 0 20px 20px 20px;
+            }
+            h2 {
+                text-align: center;
+                margin: 20px 0;
+            }
+            img {
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+                max-width: 600px;
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }
             .instruction-text {
                 font-size: 20px;
                 font-weight: bold;
                 margin: 20px 0;
+                text-align: center;
+            }
+            form {
+                text-align: center;
             }
             .target-label {
                 font-size: 18px;
@@ -35,9 +80,13 @@
         </style>
     </head>
     <body>
-        <h2>RNA Target Screening Analysis</h2>
-        <img src="{{ url_for('static', filename='rna-ligand-inputs.png') }}" alt="RNA-Ligand Inputs" style="max-width: 600px; margin: 20px 0;">
-        <p class="instruction-text">Select an RNA target to analyze the virtual screening results:</p>
+        <div class="header">
+            <h1>RNA Target Screening Analysis</h1>
+            <p>Explore virtual screening results for RNA-ligand interactions</p>
+        </div>
+        <div class="content">
+            <img src="{{ url_for('static', filename='robin-pipeline.png') }}" alt="Robin Data Curation Pipeline">
+            <p class="instruction-text">Select an RNA target to analyze the virtual screening results:</p>
         <form action="/analyze" method="POST">
             <label for="target" class="target-label">RNA Target:</label>
             <select name="target" id="target" class="target-select">
@@ -50,5 +99,6 @@
             <br><br>
             <input type="submit" value="Analyze" class="action-button">
         </form>
+        </div>
     </body>
 </html>

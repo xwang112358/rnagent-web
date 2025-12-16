@@ -29,6 +29,6 @@ instance/
 .DS_Store
 Thumbs.db
 
-*.csv
 
+md_files/
 arxiv/
